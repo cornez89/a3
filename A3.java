@@ -68,26 +68,48 @@ class WebServer implements Runnable
     **/
     void processRequest()
     {
-        try {
-            String[] request = parseRequest();
-            String getString = request[0];
+        String[] request;
+            String getString;
             String protocol;
-            Scanner getRequest = new Scanner(getString);
+            String filePath;            
+            Scanner parser; 
             byte[] file;
-            getRequest.next();
-            getString = getRequest.next();
-            protocol = getRequest.next();
-
-            System.out.println("Parsed Request");
-            file = loadFile(new File(getString)); //doesn't work
-            System.out.println("Found file");
-            write200Response(protocol, file, protocol);
-            System.out.println("here");
-        } catch (FileNotFoundException fnef) {
-            System.out.println("File does not exist");
+            final String RESPONSE_418 = "coffee";
+            final String RESPONSE_503 = "tea/coffee";
+        try {
+            request = parseRequest();  //full reques
+            getString = request[0];      //GET line
+            parser = new Scanner(getString);
+//Seperate the file path and the protocol
+            if(!parser.next().equals("GET")) {
+                filePath = parser.next().substring(1);          //chop out the first "/"
+                protocol = parser.next();
+            } else {
+                throw new Exception("GET command required.");
+            }
+        //Complete the request                
+            // filter out /coffee and /tea/coffee
+            switch (filePath) {
+                case RESPONSE_418:
+                    writeCannedResponse(protocol, 418, RESPONSE_503);
+                    break;
+                case RESPONSE_503:
+                    writeCannedResponse(protocol, 503, RESPONSE_503);
+                    break;
+                default: 
+                    try {
+                        file = loadFile(new File(getString));
+                        write200Response(protocol, file, filePath);
+                    } catch (FileNotFoundException fnef) {
+                        write404Response(protocol, filePath);
+                    }        
+            }
         } catch (IOException ioe) {
             System.out.println("Problem parseing requesting");
-        } 
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        
     }// processRequest method
 
     /* Read the HTTP request from the input stream line by line up to
@@ -136,8 +158,18 @@ class WebServer implements Runnable
     **/
     void write200Response(String protocol, byte[] body, String pathToFile)
     {
-        /* To be completed */
-
+//Make header
+        int contentLength = body.length;
+        String response = protocol + " 200 Document Follows\n";
+        response += "Content-Length: " + contentLength + "\n\n"; 
+//Add body
+        response += body;
+//send
+        try {
+            out.writeUTF(response);
+        } catch (IOException ioe) {
+            System.out.println("Problem writing 200 Response");
+        }
     }// write200Response method
 
     /* Given an HTTP protocol description string and a path that does not refer
@@ -147,9 +179,16 @@ class WebServer implements Runnable
        in the response is "Content-Type".
     **/
     void write404Response(String protocol, String pathToFile)
-    {
-        /* To be completed */
-
+    { 
+        String response = protocol + " 404 Not found\n";
+        response += "Content-Type: " + pathToFile + "\n\n"; 
+//Add body
+        response += "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>Page not found</title></head><body><h1>HTTP Error 404 Not Found</h1><h2>The file <span style=\"color: red\">/" + pathToFile + "</span> does not exist on this server.</h2></body></html>";
+        try {
+            out.writeUTF(response);
+        } catch (IOException ioe) {
+            System.out.println("Problem writing 404 Response");
+        }
     }// write404Response method
 
     /* Given an HTTP protocol description string, a byte array, and a file
@@ -160,7 +199,16 @@ class WebServer implements Runnable
     **/
     void writeCannedResponse(String protocol, int code, String description)
     {
-        /* To be completed */
+        switch(code) {
+            case 200://how do we get the file information?
+                description
+                write200Response(protocol,, description);
+            case 400:
+                write404Response(protocol, description);
+            case 418:
+            case 503:
+            
+        }
 
     }// writeCannedResponse method
 
