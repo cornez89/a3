@@ -201,8 +201,8 @@ class WebServer implements Runnable
     {
         switch(code) {
             case 200://how do we get the file information?
-                description
-                write200Response(protocol,, description);
+                byte[] body = new byte[0];
+                write200Response(protocol, body, description);
             case 400:
                 write404Response(protocol, description);
             case 418:
