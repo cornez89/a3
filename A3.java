@@ -165,12 +165,10 @@ class WebServer implements Runnable
     byte[] loadFile(File file)
     {
         byte htmlBytes[] = new byte[0];
+    
         try 
         {
-            Scanner scanner = new Scanner(file);
-            String htmlString = scanner.useDelimiter("\\Z").next();
-            scanner.close();
-            htmlBytes = htmlString.getBytes("UTF-8");
+            htmlBytes = Files.readAllBytes(file.toPath());
         } 
         catch (Exception e) //multiple exceptions need to be addressed later
         {
