@@ -29,7 +29,7 @@ public class A3
   
            while (true)
            {
-                System.out.println("%% Waiting for client...");
+                System.out.println("%% Waiting for a client...");
                clientSocket = serverSocket.accept();
 
                (new Thread( new WebServer(clientSocket))).start();
@@ -92,6 +92,7 @@ class WebServer implements Runnable
         final int CODE_405 = 405;
         final int CODE_418 = 418;
         final int CODE_503 = 503;
+        final String KEEP_ALIVE = "k";
 
         try 
         {
@@ -99,28 +100,28 @@ class WebServer implements Runnable
 
             if(!requestLine[0].equals(REQUEST_GET))
             {
-                writeCannedResponse(requestLine[2], CODE_405, RESPONSE_405); // return 405 response
+                writeCannedResponse(requestLine[2], CODE_405, RESPONSE_405); 
             } 
             else
             {
                 switch (requestLine[1]) 
                 {
                     case REQUEST_418:
-                        writeCannedResponse(requestLine[2], CODE_418, REPSONSE_418); //return 418 response
+                        writeCannedResponse(requestLine[2], CODE_418, REPSONSE_418); 
                         break;
 
                     case REQUEST_503:
-                        writeCannedResponse(requestLine[2], CODE_503, REPSONSE_503); //return 503 response
+                        writeCannedResponse(requestLine[2], CODE_503, REPSONSE_503); 
                         break;
                 
                     default:
                         File file = new File(System.getProperty("user.dir") + requestLine[1]);
 
-                        if(file.exists())   //if URL is valid, return 200 response
+                        if(file.exists())   
                         {
                             write200Response(requestLine[2], loadFile(file), requestLine[1]);
                         }
-                        else                    //URL not valid, return 404 response
+                        else                    
                         {
                             write404Response(requestLine[2], requestLine[1]);
                         }
@@ -129,11 +130,10 @@ class WebServer implements Runnable
                 }
             }
         } 
-        catch (IOException ioe) //may need additional exception handlers
+        catch (IOException ioe) 
         {
             System.out.println("Error in parseRequest(): " + ioe.getMessage());
         }
-
         close();
     }// processRequest method
 
@@ -148,13 +148,12 @@ class WebServer implements Runnable
     {
         final String CONSOLE_SPACING = "     %s\n";
         String line = in.readLine();
-        String requestLine[] = line.split("\\s"); //will return after printing all lines up to body
-
+        String requestLine[] = line.split("\\s"); 
         System.out.println("\n*** request ***"); 
-        while(!line.equals("")) //read until hitting empty line between header lines and body
+        while(!line.equals("")) 
         {
             System.out.printf(CONSOLE_SPACING, line);
-            line = in.readLine(); //move to next line
+            line = in.readLine(); 
         }
 
         return requestLine;
@@ -227,8 +226,12 @@ class WebServer implements Runnable
         final String CONSOLE_SPACING = "     %s\n";
         final String RESPONSE_CONTENT_TYPE = "ContentType: text/html\r\n";
         final String SEPARATOR = "\r\n";
-
-        String html404 = String.format("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>Page not found</title></head><body><h1>HTTP Error 404 Not Found</h1><h2>The file <span style=\"color: red\">%s</span> does not exist on this server.</h2></html></body>", pathToFile);
+        
+        String html404 = String.format("<!DOCTYPE html><html><head><meta charset=");
+        html404 += String.format("\"UTF-8\"><title>Page not found</title></head><body>");
+        html404 += String.format("<h1>HTTP Error 404 Not Found</h1><h2>The file ");
+        html404 += String.format("<span style=\"color: red\">%s</span> ", pathToFile);
+        html404 += String.format("does not exist on this server.</h2></html></body>");
         String responseStatus = String.format("%s Not found\r", protocol);
 
         try 
@@ -246,7 +249,7 @@ class WebServer implements Runnable
         } 
         catch (IOException e) 
         {
-            // TODO Auto-generated catch block
+            System.out.println("Exception at write404Response():" + e.getMessage());
         }
     }// write404Response method
 
