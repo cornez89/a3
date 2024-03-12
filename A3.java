@@ -7,9 +7,7 @@
 
 import java.io.*;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.*;
 
 public class A3
 {
@@ -34,11 +32,43 @@ public class A3
 
                (new Thread( new WebServer(clientSocket))).start();
            }
-       } 
+       }
+       catch (IllegalThreadStateException itse)
+       {
+            System.out.println(
+                "Thread error in A3.main(): " + itse.getMessage());
+       }
+       catch (IllegalArgumentException iae)
+       {
+            System.out.println(
+                "Argument error in A3.main(): " + iae.getMessage());
+       }
+       catch (SecurityException se)
+       {
+            System.out.println(
+                "Security error in A3.main(): " + se.getMessage());
+       }
+       catch (SocketTimeoutException ste)
+       {
+            System.out.println(
+                "Socket timeout error in A3.main(): "
+                + ste.getMessage());
+       }
+       catch (java.nio.channels.IllegalBlockingModeException ibme)
+       {
+            System.out.println(
+                "Blocking error in A3.main(): " + ibme.getMessage());
+       }
        catch (IOException ioe)
        {
-            System.out.println("Server encountered an error. Shutting down...");
-       }  
+            System.out.println(
+                "IO error in A3.main(): " + ioe.getMessage());
+       }
+       catch (Exception e)
+       {
+            System.out.println(
+                "Error in A3.main(): " + e.getMessage());
+       }
     }// main method
 
 }// A3 class
@@ -60,13 +90,23 @@ class WebServer implements Runnable
         try
         {               
             openStreams(clientSocket);
-            System.out.println("%% New connection established: " + clientSocket);
-            System.out.printf("%%%% [# of connected clients: %d]\n", ++numConnections);
+            System.out.println(
+                "%% New connection established: " + clientSocket);
+            System.out.printf(
+                "%%%% [# of connected clients: %d]\n",
+                ++numConnections);
         } 
         catch (IOException ioe)
         {
-            System.out.println("Error in openStreams(): " + ioe.getMessage());
-        }  
+            System.out.println(
+                "IO error in openStreams(): " + ioe.getMessage());
+        }
+        catch (Exception e)
+        {
+            System.out.println(
+                "Error in Webserver class constructor: "
+                + e.getMessage());
+        }
     }// constructor
 
     /* Each WebServer thread processes one HTTP GET request and
@@ -75,6 +115,7 @@ class WebServer implements Runnable
     public void run()
     {
         processRequest();
+        close();
     }// run method
 
     /* Parse the request then send the appropriate HTTP response
@@ -88,11 +129,11 @@ class WebServer implements Runnable
         final String REQUEST_503 = "/tea/coffee";
         final String RESPONSE_405 = "Method not allowed";
         final String REPSONSE_418 = "I'm a teapot";
-        final String REPSONSE_503 = "Coffee is temporarily unavailable";
+        final String REPSONSE_503 
+            = "Coffee is temporarily unavailable";
         final int CODE_405 = 405;
         final int CODE_418 = 418;
         final int CODE_503 = 503;
-        final String KEEP_ALIVE = "k";
 
         try 
         {
@@ -100,14 +141,14 @@ class WebServer implements Runnable
 
             if(!requestLine[0].equals(REQUEST_GET))
             {
-                writeCannedResponse(requestLine[2], CODE_405, RESPONSE_405); 
+                writeCannedResponse(requestLine[2], CODE_405, RESPONSE_405); e
             } 
             else
             {
                 switch (requestLine[1]) 
                 {
                     case REQUEST_418:
-                        writeCannedResponse(requestLine[2], CODE_418, REPSONSE_418); 
+                        writeCannedResponse(requestLine[2], CODE_418, REPSONSE_418);
                         break;
 
                     case REQUEST_503:
@@ -115,25 +156,31 @@ class WebServer implements Runnable
                         break;
                 
                     default:
-                        File file = new File(System.getProperty("user.dir") + requestLine[1]);
-
+                        File file = new File(
+                            System.getProperty("user.dir")
+                            + requestLine[1]);
                         if(file.exists())   
                         {
-                            write200Response(requestLine[2], loadFile(file), requestLine[1]);
+                            write200Response(
+                                requestLine[2], loadFile(file),
+                                requestLine[1]);
                         }
                         else                    
                         {
-                            write404Response(requestLine[2], requestLine[1]);
+                            write404Response(
+                                requestLine[2], 
+                                requestLine[1]);
                         }
-
                         break;
                 }
             }
         } 
-        catch (IOException ioe) 
+        catch (IOException ioe)
         {
-            System.out.println("Error in parseRequest(): " + ioe.getMessage());
+            System.out.println(
+                "IO error in processRequest(): "+ ioe.getMessage());
         }
+
         close();
     }// processRequest method
 
@@ -146,14 +193,16 @@ class WebServer implements Runnable
     **/
     String[] parseRequest() throws IOException
     {
+        final String CONSOLE_REQUEST_START = "\n*** request ***\n";
         final String CONSOLE_SPACING = "     %s\n";
+
         String line = in.readLine();
-        String requestLine[] = line.split("\\s"); 
+        String requestLine[] = line.split("\\s");
         System.out.println("\n*** request ***"); 
-        while(!line.equals("")) 
+        while(!line.equals(""))
         {
             System.out.printf(CONSOLE_SPACING, line);
-            line = in.readLine(); 
+            line = in.readLine();
         }
 
         return requestLine;
@@ -170,9 +219,31 @@ class WebServer implements Runnable
         {
             htmlBytes = Files.readAllBytes(file.toPath());
         } 
-        catch (Exception e) //multiple exceptions need to be addressed later
+        catch (java.nio.file.InvalidPathException ipe)
         {
-            System.out.println("LoadFile error: " + e.getMessage());
+            System.out.println(
+                "File path error in loadFile(): "
+                + ipe.getMessage());
+        }
+        catch (IOException ioe)
+        {
+            System.out.println(
+                "IO error in loadFile(): " + ioe.getMessage());
+        }
+        catch (OutOfMemoryError oome)
+        {
+            System.out.println(
+                "Memory error in loadFile(): " + oome.getMessage());
+        }
+        catch (SecurityException se)
+        {
+            System.out.println(
+                "Security error in loadFile(): " + se.getMessage());
+        }
+        catch (Exception e)
+        {
+            System.out.println(
+                "Error in loadFile(): " + e.getMessage());
         }
 
         return htmlBytes;
@@ -191,8 +262,10 @@ class WebServer implements Runnable
         final String CONSOLE_SPACING = "     %s\n";
         final String SEPARATOR = "\r\n";
 
-        String responseStatus = String.format("%s 200 Document Follows\r", protocol);
-        String responseContentLength = String.format("Content-Length: %d\r\n", body.length);
+        String responseStatus = String.format(
+            "%s 200 Document Follows\r", protocol);
+        String responseContentLength = String.format(
+            "Content-Length: %d\r\n", body.length);
 
         try 
         {
@@ -203,13 +276,21 @@ class WebServer implements Runnable
 
             System.out.printf(CONSOLE_RESPONSE_START);
             System.out.printf(CONSOLE_SPACING, responseStatus);
-            System.out.printf(CONSOLE_SPACING, responseContentLength);
+            System.out.printf(
+                CONSOLE_SPACING, responseContentLength);
             System.out.printf(CONSOLE_SPACING, FILE_CONTENTS);
             System.out.println();
         } 
+        catch (IOException ioe) 
+        {
+            System.out.println(
+                "IO error in write200Response(): "
+                + ioe.getMessage());
+        }
         catch (Exception e) 
         {
-            // TODO: handle exception
+            System.out.println(
+                "Error in write200Response(): " + e.getMessage());
         }
 
     }// write200Response method
@@ -224,13 +305,19 @@ class WebServer implements Runnable
     {
         final String CONSOLE_RESPONSE_START = "\n*** Response ***\n";
         final String CONSOLE_SPACING = "     %s\n";
-        final String RESPONSE_CONTENT_TYPE = "ContentType: text/html\r\n";
+        final String RESPONSE_CONTENT_TYPE
+            = "ContentType: text/html\r\n";
+        final String HTML404_FORMAT = "<!DOCTYPE html><html><head><meta cha"
+            + "rset=\"UTF-8\"><title>Page not found</title></head><b"
+            + "ody><h1>HTTP Error 404 Not Found</h1><h2>The file <sp"
+            + "an style=\"color: red\">%s</span> does not exist on t"
+            + "his server.</h2></html></body>";
         final String SEPARATOR = "\r\n";
-        
-        String html404 = String.format("<!DOCTYPE html><html><head><meta charset=");
-        html404 += String.format("\"UTF-8\"><title>Page not found</title></head><body>");
-        html404 += String.format("<h1>HTTP Error 404 Not Found</h1><h2>The file ");
-        html404 += String.format("<span style=\"color: red\">%s</span> ", pathToFile);
+
+        String html404 = String.format("<!DOCTYPE html><html><head><meta ");
+        html404 += String.format("charset=\"UTF-8\"><title>Page not found</title>");
+        html404 += String.format("</head><body><h1>HTTP Error 404 Not Found</h1><h2>");
+        html404 += String.format("The file <span style=\"color: red\">%s</span> ", pathToFile);
         html404 += String.format("does not exist on this server.</h2></html></body>");
         String responseStatus = String.format("%s Not found\r", protocol);
 
@@ -243,13 +330,14 @@ class WebServer implements Runnable
 
             System.out.printf(CONSOLE_RESPONSE_START);
             System.out.printf(CONSOLE_SPACING, responseStatus);
-            System.out.printf(CONSOLE_SPACING, RESPONSE_CONTENT_TYPE);
-            System.out.printf(CONSOLE_SPACING, html404.toString());
+            System.out.printf(
+                CONSOLE_SPACING, RESPONSE_CONTENT_TYPE);
+            System.out.printf(CONSOLE_SPACING, html404);
             System.out.println();
         } 
-        catch (IOException e) 
+        catch (IOException ioe) 
         {
-            System.out.println("Exception at write404Response():" + e.getMessage());
+            // TODO Auto-generated catch block
         }
     }// write404Response method
 
@@ -263,7 +351,8 @@ class WebServer implements Runnable
     {
         final String CONSOLE_RESPONSE_START = "\n*** Response ***\n";
         final String CONSOLE_SPACING = "     %s\n";
-        final String RESPONSE_CONTENT_TYPE = "ContentType: text/html\r\n";
+        final String RESPONSE_CONTENT_TYPE
+            = "ContentType: text/html\r\n";
         final String SEPARATOR = "\r\n";
         final int CODE_405 = 405;
         final int CODE_418 = 418;
@@ -274,7 +363,8 @@ class WebServer implements Runnable
 
         String responseFilePath = "";
         String contentsNotShown = "";
-        String responseStatus = String.format("%s %d %s\r", protocol, code, description);
+        String responseStatus = String.format(
+            "%s %d %s\r", protocol, code, description);
 
         switch (code) 
         {
@@ -291,31 +381,40 @@ class WebServer implements Runnable
                 break;
         }
 
-        contentsNotShown = String.format("<contents of %s not shown>\n", responseFilePath);
+        contentsNotShown = String.format(
+            "<contents of %s not shown>\n", responseFilePath);
 
         try 
         {
-            //headers
             out.write(responseStatus.getBytes());
             out.write(RESPONSE_CONTENT_TYPE.getBytes());
             out.write(SEPARATOR.getBytes());
 
             byte[] htmlBytes = loadFile(new File(responseFilePath));
-            out.write(htmlBytes); //send HTML file
+            out.write(htmlBytes);
             
-
             System.out.printf(CONSOLE_RESPONSE_START);
             System.out.printf(CONSOLE_SPACING, responseStatus);
-            System.out.printf(CONSOLE_SPACING, RESPONSE_CONTENT_TYPE);
+            System.out.printf(
+                CONSOLE_SPACING, RESPONSE_CONTENT_TYPE);
             System.out.printf(CONSOLE_SPACING, contentsNotShown);
+        } 
+        catch (NullPointerException npe) 
+        {
+            System.out.println(
+                "Null pointer error in writeCannedResponse: "
+                + npe.getMessage());
         } 
         catch (IOException ioe) 
         {
-            System.out.println(ioe.getMessage());
+            System.out.println(
+                "IO error in writeCannedResponse: "
+                + ioe.getMessage());
         } 
         catch (Exception e) 
         {
-            System.out.println("writeCannedResponse error");
+            System.out.println(
+                "Error in writeCannedResponse(): " + e.getMessage());
         }
     }// writeCannedResponse method
 
@@ -324,8 +423,10 @@ class WebServer implements Runnable
     **/    
     void openStreams(Socket clientSocket) throws IOException
     {
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        out = new DataOutputStream(clientSocket.getOutputStream()); 
+        in = new BufferedReader(
+            new InputStreamReader(clientSocket.getInputStream()));
+
+        out = new DataOutputStream(clientSocket.getOutputStream());
     }// openStreams method
 
     /* close all open I/O streams and sockets; also update and display the
@@ -335,17 +436,26 @@ class WebServer implements Runnable
     {
         try
         {
-            System.out.println("%% Connection Released: " + clientSocket);
-            System.out.printf("%%%% [# of connected clients: %d]\n", --numConnections);
+            System.out.println(
+                "%% Connection Released: " + clientSocket);
+            System.out.printf(
+                "%%%% [# of connected clients: %d]\n",
+                --numConnections);
 
-            if (in != null)           { in.close();           } 
-            if (out != null)          { out.close();          } 
+            if (in != null)           { in.close();           }
+            if (out != null)          { out.close();          }
             if (clientSocket != null) { clientSocket.close(); }
         } 
         catch (IOException ioe)
         {
-            System.err.println("Error in close(): " + ioe.getMessage());
+            System.err.println(
+                "IO error in close(): " + ioe.getMessage());
         }   
+        catch (Exception e)
+        {
+            System.err.println(
+                "Error in close(): " + e.getMessage());
+        }  
     }// close method
 
 }// WebServer class
