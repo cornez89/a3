@@ -93,7 +93,7 @@ class WebServer implements Runnable
             System.out.println(
                 "%% New connection established: " + clientSocket);
             System.out.printf(
-                "%%%% [# of connected clients: %d]\n",
+                "%% [# of connected clients: %d]\n",
                 ++numConnections);
         } 
         catch (IOException ioe)
@@ -115,7 +115,6 @@ class WebServer implements Runnable
     public void run()
     {
         processRequest();
-        close();
     }// run method
 
     /* Parse the request then send the appropriate HTTP response
@@ -141,7 +140,7 @@ class WebServer implements Runnable
 
             if(!requestLine[0].equals(REQUEST_GET))
             {
-                writeCannedResponse(requestLine[2], CODE_405, RESPONSE_405); e
+                writeCannedResponse(requestLine[2], CODE_405, RESPONSE_405);
             } 
             else
             {
@@ -198,7 +197,7 @@ class WebServer implements Runnable
 
         String line = in.readLine();
         String requestLine[] = line.split("\\s");
-        System.out.println("\n*** request ***"); 
+        System.out.printf(CONSOLE_REQUEST_START); 
         while(!line.equals(""))
         {
             System.out.printf(CONSOLE_SPACING, line);
@@ -314,11 +313,7 @@ class WebServer implements Runnable
             + "his server.</h2></html></body>";
         final String SEPARATOR = "\r\n";
 
-        String html404 = String.format("<!DOCTYPE html><html><head><meta ");
-        html404 += String.format("charset=\"UTF-8\"><title>Page not found</title>");
-        html404 += String.format("</head><body><h1>HTTP Error 404 Not Found</h1><h2>");
-        html404 += String.format("The file <span style=\"color: red\">%s</span> ", pathToFile);
-        html404 += String.format("does not exist on this server.</h2></html></body>");
+        String html404 = String.format(HTML404_FORMAT, pathToFile);
         String responseStatus = String.format("%s Not found\r", protocol);
 
         try 
@@ -337,7 +332,7 @@ class WebServer implements Runnable
         } 
         catch (IOException ioe) 
         {
-            // TODO Auto-generated catch block
+            System.out.println("Exception at write404Response(): " + ioe.getMessage());
         }
     }// write404Response method
 
