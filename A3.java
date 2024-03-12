@@ -7,6 +7,7 @@
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 
@@ -186,13 +187,13 @@ class WebServer implements Runnable
     **/
     void write200Response(String protocol, byte[] body, String pathToFile)
     {
-        //Still having trouble with 200 responses, they don't come out right. Will try to figure out later, been working on this for half a day.
         final String CONSOLE_RESPONSE_START = "\n*** Response ***\n";
+        final String FILE_CONTENTS = "<file contents not shown>";
         final String CONSOLE_SPACING = "     %s\n";
         final String SEPARATOR = "\r\n";
 
-        String responseStatus = String.format("%s 200 Document Follows\r\n", protocol);
-        String responseContentLength = String.format("Content-Length: %d\r\n", body.length); //length is from body?
+        String responseStatus = String.format("%s 200 Document Follows\r", protocol);
+        String responseContentLength = String.format("Content-Length: %d\r\n", body.length);
 
         try 
         {
@@ -204,7 +205,7 @@ class WebServer implements Runnable
             System.out.printf(CONSOLE_RESPONSE_START);
             System.out.printf(CONSOLE_SPACING, responseStatus);
             System.out.printf(CONSOLE_SPACING, responseContentLength);
-            System.out.printf(CONSOLE_SPACING, body.toString());
+            System.out.printf(CONSOLE_SPACING, FILE_CONTENTS);
             System.out.println();
         } 
         catch (Exception e) 
@@ -228,7 +229,7 @@ class WebServer implements Runnable
         final String SEPARATOR = "\r\n";
 
         String html404 = String.format("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>Page not found</title></head><body><h1>HTTP Error 404 Not Found</h1><h2>The file <span style=\"color: red\">%s</span> does not exist on this server.</h2></html></body>", pathToFile);
-        String responseStatus = String.format("%s Not found\r\n", protocol);
+        String responseStatus = String.format("%s Not found\r", protocol);
 
         try 
         {
@@ -269,7 +270,8 @@ class WebServer implements Runnable
         final String FILE_503_PATH = "html\\503.html";
 
         String responseFilePath = "";
-        String responseStatus = String.format("%s %d %s\r\n", protocol, code, description);
+        String contentsNotShown = "";
+        String responseStatus = String.format("%s %d %s\r", protocol, code, description);
 
         switch (code) 
         {
@@ -286,6 +288,8 @@ class WebServer implements Runnable
                 break;
         }
 
+        contentsNotShown = String.format("<contents of %s not shown>\n", responseFilePath);
+
         try 
         {
             //headers
@@ -300,7 +304,7 @@ class WebServer implements Runnable
             System.out.printf(CONSOLE_RESPONSE_START);
             System.out.printf(CONSOLE_SPACING, responseStatus);
             System.out.printf(CONSOLE_SPACING, RESPONSE_CONTENT_TYPE);
-            System.out.printf(CONSOLE_SPACING, htmlBytes.toString());
+            System.out.printf(CONSOLE_SPACING, contentsNotShown);
         } 
         catch (IOException ioe) 
         {
